@@ -8,22 +8,16 @@ class User(AbstractUser):
     username = models.CharField(
         verbose_name='Логин',
         max_length=150,
-        unique=True,
-        blank=False,
-        null=False
+        unique=True
     )
     password = models.CharField(
         verbose_name='Пароль',
-        max_length=150,
-        blank=False,
-        null=False
+        max_length=150
     )
     email = models.EmailField(
         verbose_name='E-mail',
         max_length=254,
-        unique=True,
-        blank=False,
-        null=False
+        unique=True
     )
     first_name = models.CharField(
         verbose_name='Имя',
@@ -37,7 +31,7 @@ class User(AbstractUser):
     )
 
     class Meta:
-        verbose_name = 'Пользователь',
+        verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
@@ -46,3 +40,23 @@ class User(AbstractUser):
     @property
     def is_admin(self):
         return self.is_superuser
+
+
+class Follow(models.Model):
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        related_name='author',
+        on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name='Подписчик',
+        related_name='follower',
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = 'Подписки'
+        verbose_name_plural = 'Подписки'
+
