@@ -5,9 +5,9 @@ from user.models import User
 
 MIN_VALUE_FOR_AMOUNT = 1
 
-BREAKFAST = 'breakfast'
-LUNCH = 'lunch'
-DINNER = 'dinner'
+BREAKFAST = 'Завтрак'
+LUNCH = 'Обед'
+DINNER = 'Ужин'
 
 ORANGE = '#E26C2D'
 GREEN = '#49B64E'
@@ -21,8 +21,7 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=200,
-        unique=True
+        max_length=200
     )
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
@@ -35,7 +34,7 @@ class Ingredient(models.Model):
         default_related_name = 'Ingredients'
 
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.name} {self.measurement_unit}'
 
 
 class Tag(models.Model):
@@ -43,8 +42,8 @@ class Tag(models.Model):
 
     FOOD = (
         (BREAKFAST, 'Завтрак'),
-        (LUNCH, 'обед'),
-        (DINNER, 'ужин')
+        (LUNCH, 'Обед'),
+        (DINNER, 'Ужин')
     )
     COLOR = (
         (ORANGE, 'Оранжевый'),
@@ -157,7 +156,15 @@ class IngredientAmount(models.Model):
         default_related_name = 'recipes'
 
     def __str__(self):
-        return f'{self.amount}'
+        return f'{self.ingredient} {self.amount}'
+
+
+class TagRecipe(models.Model):
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.tag} {self.recipe}'
 
 
 class Favourites(models.Model):

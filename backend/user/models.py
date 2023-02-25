@@ -42,7 +42,7 @@ class User(AbstractUser):
         return self.is_superuser
 
 
-class Follow(models.Model):
+class Subscription(models.Model):
     author = models.ForeignKey(
         User,
         verbose_name='Автор',

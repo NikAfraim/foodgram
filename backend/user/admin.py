@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Follow
+from .models import User, Subscription
 
 
 @admin.register(User)
@@ -9,18 +9,21 @@ class UserAdmin(admin.ModelAdmin):
 
     list_display = (
         'pk',
+        'full_name',
         'username',
         'email',
-        'first_name',
-        'last_name'
     )
-    list_filter = ('username',)
+    list_filter = ('username', 'email')
     search_fields = ('username',)
-    list_editable = ('first_name', 'last_name', 'username',)
+    list_editable = ('username',)
+
+    def full_name(self, obj):
+        return "%s %s" % (obj.first_name, obj.last_name)
+    full_name.short_description = 'Полное имя'
 
 
-@admin.register(Follow)
-class FollowAdmin(admin.ModelAdmin):
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
 
     list_display = ('pk', 'author', 'user',)
     list_filter = ('user',)
