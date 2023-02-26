@@ -27,7 +27,12 @@ router.register(
 router.register(
     r'recipes/(?P<recipes_id>\d+)/shopping_cart',
     views.RecipeViewSet,
-    basename='subscribe'
+    basename='shopping_cart'
+)
+router.register(
+    'recipes/download_shopping_cart',
+    views.RecipeViewSet,
+    basename='download_shopping_cart'
 )
 
 urlpatterns = [

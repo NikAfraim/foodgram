@@ -1,5 +1,5 @@
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
 
 from user.models import User
 
@@ -131,6 +131,7 @@ class Recipe(models.Model):
 
 
 class IngredientAmount(models.Model):
+    """Модель ингредиентов с количеством"""
     recipes = models.ForeignKey(
         Recipe,
         verbose_name='Название блюда',
@@ -168,6 +169,7 @@ class TagRecipe(models.Model):
 
 
 class Favourites(models.Model):
+    """Модель избранного"""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -189,6 +191,7 @@ class Favourites(models.Model):
 
 
 class ShopList(models.Model):
+    """Модель списка покупок"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -207,7 +210,3 @@ class ShopList(models.Model):
 
     def __str__(self):
         return f'{self.recipe}'
-
-
-
-

@@ -1,14 +1,13 @@
+import base64
 from collections import OrderedDict
 
-from django.forms import ValidationError
-from rest_framework import serializers
-from recipes.models import Recipe, Tag, Ingredient, Favourites, ShopList, \
-    IngredientAmount, TagRecipe
-from rest_framework.validators import UniqueTogetherValidator
-from user.models import User, Subscription
-import base64
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from rest_framework import serializers
+
+from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
+                            ShopList, Tag)
+from user.models import Subscription, User
 
 
 class UserCreateSerializer(UserCreateSerializer):
@@ -67,7 +66,7 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(UserReadSerializer):
-
+    """Преобразование данных класса User для подписки"""
     recipes = ShortRecipeSerializer(many=True, read_only=False)
     recipes_count = serializers.SerializerMethodField()
 
@@ -91,51 +90,6 @@ class SubscriptionSerializer(UserReadSerializer):
         return obj.recipes.count()
 
 
-class Subscription_Serializer(serializers.ModelSerializer):
-    """Преобразование данных класса Subscribe"""
-    email = serializers.ReadOnlyField(source='author.email')
-    id = serializers.ReadOnlyField(source='author.id')
-    username = serializers.ReadOnlyField(source='author.username')
-    first_name = serializers.ReadOnlyField(source='author.first_name')
-    last_name = serializers.ReadOnlyField(source='author.last_name')
-    is_subscribed = serializers.SerializerMethodField()
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Subscription
-        fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'is_subscribed', 'recipes', 'recipes_count'
-        )
-        validators = [UniqueTogetherValidator(
-            queryset=Subscription.objects.all(),
-            fields=['user', 'author']
-        )]
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        return Subscription.objects.filter(
-            author=obj, user=request.user
-        ).exists()
-
-    def get_recipes(self, obj):
-        request = self.context.get('request')
-        recipes_limit = request.GET.get('recipes_limit')
-        recipes = Recipe.objects.filler(author=obj.author).prefertch_related(
-            'tags', 'ingredients'
-        )
-        if recipes_limit:
-            recipes = recipes[:int(recipes_limit)]
-        serializer = RecipeReadSerializer(recipes, read_only=True, many=True)
-        return serializer
-
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filler(author=obj.author).count()
-
-
 class TagSerializer(serializers.ModelSerializer):
     """Преобразование данных класса Tag"""
 
@@ -147,17 +101,6 @@ class TagSerializer(serializers.ModelSerializer):
             'color',
             'slug'
         )
-
-
-class TagRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    name = serializers.ReadOnlyField(source='tag.name')
-    color = serializers.ReadOnlyField(source='tag.color')
-    slug = serializers.ReadOnlyField(source='tag.slug')
-
-    class Meta:
-        model = TagRecipe
-        fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -172,6 +115,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
+    """Преобразование данных класса IngredientAmount"""
     id = serializers.IntegerField()
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -184,6 +128,7 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 
 
 class Base64ImageField(serializers.ImageField):
+    """Преобразование данных поля Image"""
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')

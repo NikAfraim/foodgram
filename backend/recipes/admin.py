@@ -1,25 +1,22 @@
 from django.contrib import admin
-from django.forms import TextInput, Textarea
-from django.db import models
 
-from .models import Recipe, Tag, Ingredient, IngredientAmount, Favourites, \
-    ShopList, TagRecipe
+from .models import (Favourites, Ingredient, IngredientAmount, Recipe,
+                     ShopList, Tag, TagRecipe)
 
 admin.site.site_header = 'Admin foodgram'
 admin.site.site_title = 'Admin foodgram'
 
 
 class IngredientInline(admin.TabularInline):
+    """Настройка IngredientAmount для панели Admin"""
+
     model = IngredientAmount
     extra = 1
 
 
-class FavouritesInline(admin.TabularInline):
-    model = Favourites
-
-
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    """Настройка Recipe для панели Admin"""
     list_display = ('pk', 'author', 'name', 'cooking_time', 'count')
     filter_horizontal = ('tags',)
     search_fields = ('text',)
@@ -34,13 +31,16 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(TagRecipe)
 class TagRecipeAdmin(admin.ModelAdmin):
+    """Настройка TagRecipe для панели Admin"""
+
     list_display = ('pk', 'tag', 'recipe')
-    # search_fields = ('name',)
     list_editable = ('tag', 'recipe')
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+    """Настройка Tag для панели Admin"""
+
     list_display = ('pk', 'name', 'color', 'slug')
     search_fields = ('name',)
     list_editable = ('name', 'color', 'slug')
@@ -48,19 +48,25 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(IngredientAmount)
 class IngredientAmountAdmin(admin.ModelAdmin):
+    """Настройка IngredientAmount для панели Admin"""
+
     list_display = ('pk', 'ingredient', 'recipes', 'amount')
-    # search_fields = ('name',))
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
+    """Настройка Ingredient для панели Admin"""
+
     list_display = ('pk', 'name', 'measurement_unit')
+    list_filter = ('name',)
     search_fields = ('name',)
     list_editable = ('name', 'measurement_unit',)
 
 
 @admin.register(Favourites)
 class FavouritesAdmin(admin.ModelAdmin):
+    """Настройка Favourites для панели Admin"""
+
     list_display = ('pk', 'user', 'recipe')
     search_fields = ('user',)
     list_editable = ('recipe',)
@@ -68,10 +74,8 @@ class FavouritesAdmin(admin.ModelAdmin):
 
 @admin.register(ShopList)
 class ShopListAdmin(admin.ModelAdmin):
+    """Настройка ShopList для панели Admin"""
+
     list_display = ('pk', 'user', 'recipe')
     search_fields = ('user',)
     list_editable = ('recipe',)
-
-
-
-

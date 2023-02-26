@@ -4,7 +4,8 @@ from django.core.management.base import BaseCommand
 
 from recipes.models import Ingredient
 
-PATH_CSV = 'C:/Users/NikSe/PycharmProjects/foodgram-project-react/data/ingredients.csv'
+PATH_CSV = 'C:/Users/NikSe/PycharmProjects'\
+           '/foodgram-project-react/data/ingredients.csv'
 
 
 def ingredients_load(row):

@@ -1,18 +1,23 @@
-from django.shortcuts import render, get_object_or_404
-from rest_framework import filters, mixins, permissions, viewsets, status
-
-from recipes.models import Recipe, Tag, Ingredient, Favourites, ShopList
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from user.models import User, Subscription
-from .serializers import (TagSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer,
-                          UserCreateSerializer, UserReadSerializer,
-                          SubscriptionSerializer, ShortRecipeSerializer)
-from .permissions import ReadOnly, IsAdminOrReadOnly, IsAuthorOrReadOnly
-from rest_framework.views import APIView
-from djoser.views import UserViewSet as DjoserUserViewSet
+
+from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
+                            ShopList, Tag)
+from user.models import Subscription, User
+
+from .filters import IngredientFilter, RecipesFilter
+from .permissions import IsAuthor, IsAuthorOrReadOnly, ReadOnly
+from .serializers import (IngredientSerializer, RecipeReadSerializer,
+                          RecipeWriteSerializer, ShortRecipeSerializer,
+                          SubscriptionSerializer, TagSerializer,
+                          UserReadSerializer)
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -20,20 +25,6 @@ class UserViewSet(DjoserUserViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserReadSerializer
-
-    # def get_queryset(self):
-    #     return User.objects.all()
-
-    # @action(methods=('get',), detail=False)
-    # def subscriptions(self, request):
-    #     if self.request.user.is_anonymous:
-    #         return Response(status=status.HTTP_401_UNAUTHORIZED)
-    #
-    #     # pages = self.paginate_queryset(
-    #     #     User.objects.filter(subscription__user=self.request.user)
-    #     # )
-    #     serializer = SubscriptionSerializer(many=True)
-    #     return serializer.data
 
     @action(detail=True,
             methods=['post', 'delete'],
@@ -69,18 +60,6 @@ class UserViewSet(DjoserUserViewSet):
         return self.get_paginated_response(serializer.data)
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    """View-класс реализующий операции модели Subscription"""
-
-    queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
-    permissions = [IsAuthorOrReadOnly]
-
-    def perform_create(self, serializer):
-        users_id = self.kwargs.get('users_id')
-        serializer.save(author=users_id, user=self.request.user)
-
-
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """View-класс реализующий операции модели Tag"""
 
@@ -98,8 +77,10 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permissions = [ReadOnly]
+    pagination_class = None
     filter_backends = (filters.SearchFilter, )
     search_fields = ('name',)
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -107,6 +88,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
     permissions = [IsAuthorOrReadOnly]
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
+    search_fields = ('name',)
+    filterset_class = RecipesFilter
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -140,7 +124,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True,
             methods=['post', 'delete'],
-            permission_classes=(IsAuthorOrReadOnly,))
+            permission_classes=(IsAuthor,))
     def shopping_cart(self, request, **kwargs):
         user = self.request.user
         recipe = get_object_or_404(self.queryset, id=kwargs['pk'])
@@ -148,29 +132,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             if ShopList.objects.filter(
                     user=request.user, recipe=recipe).exists():
-                raise ValidationError('Продукты уже в корзине')
+                raise ValidationError('Рецепт уже в корзине')
             ShopList.objects.create(user=user, recipe=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             in_shopping_cart = ShopList.objects.filter(
                 user=request.user, recipe=recipe).exists()
             if in_shopping_cart is False:
-                raise ValidationError("Продукты удаленны из корзины")
+                raise ValidationError("Рецепт удаленны из корзины")
         ShopList.objects.filter(user=request.user, recipe=recipe).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @action(detail=False,
+            methods=['get'],
+            permission_classes=(IsAuthor,))
+    def download_shopping_cart(self, request):
+        ingredients = (
+            IngredientAmount.objects
+            .filter(recipes__shop_list__user=request.user)
+            .values('ingredient')
+            .annotate(total_amount=Sum('amount'))
+            .values_list(
+                'ingredient__name',
+                'total_amount',
+                'ingredient__measurement_unit'
+            )
+        )
+        filename = 'shopping_list.txt'
+        file_list = []
+        [file_list.append('{} - {} {}.'.format(*ingredient))
+         for ingredient in ingredients]
+        file = HttpResponse('Список покупок: \n' + '\n'.join(file_list),
+                            content_type='text/plain')
+        file['Content-Disposition'] = f'attachment; filename={filename}'
+        return file
