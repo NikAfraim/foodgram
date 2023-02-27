@@ -30,24 +30,21 @@ class UserViewSet(DjoserUserViewSet):
             methods=['post', 'delete'],
             permission_classes=(IsAuthorOrReadOnly,))
     def subscribe(self, request, id):
-        user = self.request.user
-        author = get_object_or_404(self.queryset, id=id)
-        serializer = SubscriptionSerializer(author)
+        user = request.user
+        author = get_object_or_404(User, id=id)
+        serializer = SubscriptionSerializer(author,
+                                            data=request.data,
+                                            context={"request": request})
+        serializer.is_valid(raise_exception=True)
+
         if request.method == 'POST':
-            if Subscription.objects.filter(
-                    user=request.user, author=author).exists():
-                raise ValidationError('Вы уже подписаны на автора')
-            if user == author:
-                raise ValidationError('Нельзя подписываться на самого себя!')
             Subscription.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         if request.method == 'DELETE':
-            in_subscribed = Subscription.objects.filter(
-                user=request.user, author=author).exists()
-            if in_subscribed is False:
-                raise ValidationError("Вы не были подписаны на автора!")
-        Subscription.objects.filter(user=request.user, author=author).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            Subscription.objects.filter(user=request.user,
+                                        author=author).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['get'], detail=False)
     def subscriptions(self, request):

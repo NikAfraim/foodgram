@@ -4,6 +4,7 @@ from collections import OrderedDict
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
                             ShopList, Tag)
@@ -67,8 +68,10 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 
 class SubscriptionSerializer(UserReadSerializer):
     """Преобразование данных класса User для подписки"""
-    recipes = ShortRecipeSerializer(many=True, read_only=False)
+    recipes = ShortRecipeSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
+    email = serializers.ReadOnlyField()
+    username = serializers.ReadOnlyField()
 
     class Meta:
         model = User
@@ -82,6 +85,28 @@ class SubscriptionSerializer(UserReadSerializer):
             'recipes',
             'recipes_count'
         )
+
+    def validate(self, data):
+        request = self.context['request']
+        author = self.instance
+
+        if request.method == 'POST':
+            if Subscription.objects.filter(
+                    user=request.user,
+                    author=author).exists():
+                raise ValidationError(
+                    'Вы уже подписаны на автора')
+            if request.user == author:
+                raise ValidationError(
+                    'Нельзя подписываться на самого себя!')
+            return data
+        if request.method == 'DELETE':
+            if Subscription.objects.filter(
+                        user=request.user,
+                        author=author).exists() is False:
+                raise ValidationError(
+                    "Вы не были подписаны на автора!")
+        return data
 
     def get_is_subscribed(*args):
         return True
@@ -195,20 +220,24 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ])
         return representation
 
-    def create(self, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
-        recipes = Recipe.objects.create(**validated_data)
-        recipes.tags.set(tags)
+    @staticmethod
+    def recipes_ingredients_add(ingredients, recipe):
         for ingredient in ingredients:
             current_ingredient = (
                 Ingredient.objects.get(id=ingredient['id'])
             )
             IngredientAmount.objects.create(
                 ingredient=current_ingredient,
-                recipes=recipes,
+                recipes=recipe,
                 amount=ingredient['amount']
             )
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        recipes = Recipe.objects.create(**validated_data)
+        recipes.tags.set(tags)
+        self.recipes_ingredients_add(ingredients, recipes)
         return recipes
 
     def update(self, instance, validated_data):
@@ -217,15 +246,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         instance.tags.set(tags)
         ingredients = validated_data.pop('ingredients')
-        for ingredient in ingredients:
-            current_ingredient = (
-                Ingredient.objects.get(id=ingredient['id'])
-            )
-            IngredientAmount.objects.create(
-                ingredient=current_ingredient,
-                recipes=instance,
-                amount=ingredient['amount']
-            )
+        self.recipes_ingredients_add(ingredients, instance)
         return super().update(instance, validated_data)
 
     def get_is_favorited(self, obj):
