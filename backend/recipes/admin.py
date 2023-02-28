@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (Favourites, Ingredient, IngredientAmount, Recipe,
-                     ShopList, Tag, TagRecipe)
+                     ShopList, Tag)
 
 admin.site.site_header = 'Admin foodgram'
 admin.site.site_title = 'Admin foodgram'
@@ -27,14 +27,6 @@ class RecipeAdmin(admin.ModelAdmin):
     def count(self, obj):
         return Favourites.objects.filter(recipe=obj).count()
     count.short_description = 'Количество подписок'
-
-
-@admin.register(TagRecipe)
-class TagRecipeAdmin(admin.ModelAdmin):
-    """Настройка TagRecipe для панели Admin"""
-
-    list_display = ('pk', 'tag', 'recipe')
-    list_editable = ('tag', 'recipe')
 
 
 @admin.register(Tag)

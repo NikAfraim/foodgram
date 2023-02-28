@@ -2,7 +2,7 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = 'dd*6+^+qb_#u0q+)2*^*-m-1mnc*u8^-0jg5d3=su%fc!p1n4l'
+# SECRET_KEY = 'dd*6+^+qb_#u0q+)2*^*-m-1mnc*u8^-0jg5d3=su%fc!p1n4l'
 SECRET_KEY = os.getenv('SECRET_KEY', default='p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs')
 
 DEBUG = True
@@ -59,24 +59,24 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
 # if os.getenv('DATABASE', default=False):
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': os.getenv('DB_ENGINE',
-#                                 default='django.db.backends.postgresql'),
-#             'NAME': os.getenv('DB_NAME', default='postgres'),
-#             'USER': os.getenv('POSTGRES_USER', default='postgres'),
-#             'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
-#             'HOST': os.getenv('DB_HOST', default='db'),
-#             'PORT': os.getenv('DB_PORT', default='5432')
-#         },
-#     }
-# else:
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': os.getenv('DB_ENGINE',
+                            default='django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', default='postgres'),
+        'USER': os.getenv('POSTGRES_USER', default='postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
+        'HOST': os.getenv('DB_HOST', default='db'),
+        'PORT': os.getenv('DB_PORT', default='5432')
     },
 }
+# else:
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     },
+# }
 
 AUTH_USER_MODEL = 'user.User'
 

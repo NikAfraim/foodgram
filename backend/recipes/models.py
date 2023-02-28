@@ -160,14 +160,6 @@ class IngredientAmount(models.Model):
         return f'{self.ingredient} {self.amount}'
 
 
-class TagRecipe(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f'{self.tag} {self.recipe}'
-
-
 class Favourites(models.Model):
     """Модель избранного"""
     recipe = models.ForeignKey(

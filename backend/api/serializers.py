@@ -29,6 +29,10 @@ class UserCreateSerializer(UserCreateSerializer):
 class UserReadSerializer(UserSerializer):
     """Преобразование данных класса User на чтение"""
     is_subscribed = serializers.SerializerMethodField()
+    email = serializers.ReadOnlyField()
+    username = serializers.ReadOnlyField()
+    first_name = serializers.ReadOnlyField()
+    last_name = serializers.ReadOnlyField()
 
     class Meta:
         model = User
@@ -50,11 +54,27 @@ class UserReadSerializer(UserSerializer):
         ).exists()
 
 
+class Base64ImageField(serializers.ImageField):
+    """Преобразование данных поля Image"""
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
+        return super(Base64ImageField, self).to_internal_value(data)
+
+
 class ShortRecipeSerializer(serializers.ModelSerializer):
-    """Преобразование данных класса Recipe на запись"""
+    """
+    Преобразование данных класса Recipe в короткой форме для
+    Subscription, Favourite, ShopList
+    """
 
     name = serializers.ReadOnlyField()
     cooking_time = serializers.ReadOnlyField()
+    image = Base64ImageField(read_only=True)
 
     class Meta:
         model = Recipe
@@ -70,8 +90,7 @@ class SubscriptionSerializer(UserReadSerializer):
     """Преобразование данных класса User для подписки"""
     recipes = ShortRecipeSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
-    email = serializers.ReadOnlyField()
-    username = serializers.ReadOnlyField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -99,11 +118,10 @@ class SubscriptionSerializer(UserReadSerializer):
             if request.user == author:
                 raise ValidationError(
                     'Нельзя подписываться на самого себя!')
-            return data
         if request.method == 'DELETE':
-            if Subscription.objects.filter(
-                        user=request.user,
-                        author=author).exists() is False:
+            if not  Subscription.objects.filter(
+                    user=request.user, author=author
+            ).exists():
                 raise ValidationError(
                     "Вы не были подписаны на автора!")
         return data
@@ -134,6 +152,7 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = (
+            'id',
             'name',
             'measurement_unit',
         )
@@ -150,18 +169,6 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientAmount
         fields = ('id', 'name', 'measurement_unit', 'amount')
-
-
-class Base64ImageField(serializers.ImageField):
-    """Преобразование данных поля Image"""
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super(Base64ImageField, self).to_internal_value(data)
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -328,3 +335,41 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return ShopList.objects.filter(
             recipe=obj, user=requests.user
         ).exists()
+
+
+class FavouritesSerializer(ShortRecipeSerializer):
+    """Преобразование данных класса Favourite"""
+
+    def validate(self, data):
+        request = self.context['request']
+        recipe = self.instance
+
+        if request.method == 'POST':
+            if Favourites.objects.filter(
+                    user=request.user, recipe=recipe).exists():
+                raise ValidationError('Рецепт уже в избранном')
+        if request.method == 'DELETE':
+            if not Favourites.objects.filter(
+                    user=request.user, recipe=recipe
+            ).exists():
+                raise ValidationError("Рецепт не в избранном")
+        return data
+
+
+class ShopListSerializer(ShortRecipeSerializer):
+    """Преобразование данных класса ShopList"""
+
+    def validate(self, data):
+        requests = self.context['request']
+        recipe = self.instance
+
+        if requests.method == 'POST':
+            if ShopList.objects.filter(
+                    user=requests.user, recipe=recipe).exists():
+                raise ValidationError('Рецепт уже в списке покупок')
+        if requests.method == "DELETE":
+            if not ShopList.objects.filter(
+                    user=requests.user, recipe=recipe
+            ).exists():
+                raise ValidationError('Рецепта нету в списке покупок')
+        return data
