@@ -18,13 +18,18 @@ from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, ShortRecipeSerializer,
                           SubscriptionSerializer, TagSerializer,
                           UserReadSerializer, FavouritesSerializer,
-                          ShopListSerializer)
+                          ShopListSerializer, UserCreateSerializer)
 
 
 class UserViewSet(DjoserUserViewSet):
     """View-класс реализующий операции модели User"""
 
     queryset = User.objects.all()
+
+    # def get_serializer_class(self):
+    #     if self.request.method == 'GET':
+    #         return UserReadSerializer
+    #     return UserCreateSerializer
     serializer_class = UserReadSerializer
 
     @action(detail=True,
