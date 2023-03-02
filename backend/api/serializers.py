@@ -1,5 +1,4 @@
 import base64
-from collections import OrderedDict
 
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
@@ -88,7 +87,6 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 
 class SubscriptionSerializer(UserReadSerializer):
     """Преобразование данных класса User для подписки"""
-    # recipes = ShortRecipeSerializer(many=True, read_only=True)
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()

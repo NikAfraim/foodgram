@@ -3,9 +3,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import filters, status, viewsets, mixins
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
@@ -13,24 +12,18 @@ from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
 from user.models import Subscription, User
 
 from .filters import IngredientFilter, RecipesFilter
-from .pagination import MyCustomPagination
-from .permissions import IsAuthor, IsAuthorOrReadOnly, ReadOnly
-from .serializers import (IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer, ShortRecipeSerializer,
-                          SubscriptionSerializer, TagSerializer,
-                          UserReadSerializer, FavouritesSerializer,
-                          ShopListSerializer, UserCreateSerializer)
+from .pagination import CustomPagination
+from .permissions import IsAuthor, IsAuthorOrReadOnly
+from .serializers import (FavouritesSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          ShopListSerializer, SubscriptionSerializer,
+                          TagSerializer, UserReadSerializer)
 
 
 class UserViewSet(DjoserUserViewSet):
     """View-класс реализующий операции модели User"""
 
     queryset = User.objects.all()
-
-    # def get_serializer_class(self):
-    #     if self.request.method == 'GET':
-    #         return UserReadSerializer
-    #     return UserCreateSerializer
     serializer_class = UserReadSerializer
 
     @action(detail=True,
@@ -49,7 +42,8 @@ class UserViewSet(DjoserUserViewSet):
                                         author=author).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False,
+            pagination_class=CustomPagination)
     def subscriptions(self, request):
         if self.request.user.is_anonymous:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -68,7 +62,7 @@ class ListRetrieveViewSet(
 ):
     """Mixins классов Tag и Ingredients."""
     pagination_class = None
-    filter_backends = (filters.SearchFilter,  DjangoFilterBackend,)
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
     search_fields = ('name',)
 
 
@@ -92,7 +86,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
     permissions = [IsAuthorOrReadOnly]
-    pagination_class = MyCustomPagination
+    pagination_class = CustomPagination
     filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
     search_fields = ('name',)
     filterset_class = RecipesFilter
@@ -107,7 +101,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True,
             methods=['post', 'delete'],
-            permission_classes=(IsAuthorOrReadOnly,))
+            permission_classes=(IsAuthor,))
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(self.queryset, id=kwargs['pk'])
         serializer = FavouritesSerializer(recipe, data=request.data,
@@ -153,5 +147,5 @@ class RecipeViewSet(viewsets.ModelViewSet):
          for ingredient in ingredients]
         file = HttpResponse('Список покупок: \n\n' + '\n'.join(file_list),
                             content_type='text/plain')
-        file['Content-Disposition'] = f'attachment; filename=shopping_list'
+        file['Content-Disposition'] = 'attachment; filename=shopping_list'
         return file
