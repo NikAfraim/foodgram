@@ -13,6 +13,7 @@ from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
 from user.models import Subscription, User
 
 from .filters import IngredientFilter, RecipesFilter
+from .pagination import MyCustomPagination
 from .permissions import IsAuthor, IsAuthorOrReadOnly, ReadOnly
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, ShortRecipeSerializer,
@@ -55,7 +56,8 @@ class UserViewSet(DjoserUserViewSet):
         pages = self.paginate_queryset(
             User.objects.filter(author__user=self.request.user)
         )
-        serializer = SubscriptionSerializer(pages, many=True)
+        serializer = SubscriptionSerializer(pages, many=True,
+                                            context={'request': request})
         return self.get_paginated_response(serializer.data)
 
 
@@ -90,6 +92,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
     permissions = [IsAuthorOrReadOnly]
+    pagination_class = MyCustomPagination
     filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
     search_fields = ('name',)
     filterset_class = RecipesFilter
@@ -139,20 +142,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         ingredients = (
             IngredientAmount.objects
-            .filter(recipes__shop_list__user=request.user)
-            .values('ingredient')
-            .annotate(total_amount=Sum('amount'))
-            .values_list(
-                'ingredient__name',
-                'total_amount',
+            .filter(recipes__shop_list__user=request.user).values('ingredient')
+            .annotate(total_amount=Sum('amount')).values_list(
+                'ingredient__name', 'total_amount',
                 'ingredient__measurement_unit'
             )
         )
-        filename = 'shopping_list.txt'
         file_list = []
         [file_list.append('{} - {} {}.'.format(*ingredient))
          for ingredient in ingredients]
-        file = HttpResponse('Список покупок: \n' + '\n'.join(file_list),
+        file = HttpResponse('Список покупок: \n\n' + '\n'.join(file_list),
                             content_type='text/plain')
-        file['Content-Disposition'] = f'attachment; filename={filename}'
+        file['Content-Disposition'] = f'attachment; filename=shopping_list'
         return file

@@ -1,6 +1,6 @@
 from django_filters.rest_framework import FilterSet, filters
 
-from recipes.models import Ingredient, Recipe
+from recipes.models import Ingredient, Recipe, Tag
 
 
 class IngredientFilter(FilterSet):
@@ -18,45 +18,35 @@ class IngredientFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    """Фильтрация по:
-        тегам, в избранном, в списке покупок"""
+    """Фильтрация по: тегам, в избранном, в списке покупок"""
 
-    tags = filters.AllValuesMultipleFilter(
-        field_name='tags',
-        label='slug',
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tag.objects.all()
     )
-    is_favourited = filters.BooleanFilter(
-        method='get_favourite',
-        label='favourite',
+    is_favorited = filters.BooleanFilter(
+        method='filter_is_favorited'
     )
-    is_in_shopping_list = filters.BooleanFilter(
-        method='get_is_in_shopping_list',
-        label='shopping_list',
+    is_in_shopping_cart = filters.BooleanFilter(
+        method='filter_is_in_shopping_cart'
     )
 
     class Meta:
         model = Recipe
         fields = (
             'tags',
-            'author',
-            'is_favourited',
-            'is_in_shopping_list',
+            'author'
         )
 
-    def get_favourite(self, queryset, name, value):
+    def filter_is_favorited(self, queryset, name, value):
+        user = self.request.user
+        if value and not user.is_anonymous:
+            return queryset.filter(favourites__user=user)
+        return queryset
 
-        if value:
-
-            return queryset.filter(is_faourited__user=self.request.user)
-
-        return queryset.exclude(is_favourited=self.request.user)
-
-    def get_is_in_shopping_list(self, queryset, name, value):
-
-        if value:
-
-            return Recipe.objects.filter(
-                is_in_shopping_list__user=self.request.user
-            )
-
-        return Recipe.objects.all()
+    def filter_is_in_shopping_cart(self, queryset, name, value):
+        user = self.request.user
+        if value and not user.is_anonymous:
+            return queryset.filter(shop_list__user=user)
+        return queryset

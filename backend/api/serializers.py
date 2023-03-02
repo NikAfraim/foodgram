@@ -88,7 +88,8 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 
 class SubscriptionSerializer(UserReadSerializer):
     """Преобразование данных класса User для подписки"""
-    recipes = ShortRecipeSerializer(many=True, read_only=True)
+    # recipes = ShortRecipeSerializer(many=True, read_only=True)
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
 
@@ -119,12 +120,22 @@ class SubscriptionSerializer(UserReadSerializer):
                 raise ValidationError(
                     'Нельзя подписываться на самого себя!')
         if request.method == 'DELETE':
-            if not  Subscription.objects.filter(
+            if not Subscription.objects.filter(
                     user=request.user, author=author
             ).exists():
                 raise ValidationError(
                     "Вы не были подписаны на автора!")
         return data
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        limit = request.query_params.get('recipes_limit')
+        recipes = Recipe.objects.filter(author=obj).all()
+        if limit:
+            recipes = recipes[:int(limit)]
+        serializer = ShortRecipeSerializer(recipes, many=True, read_only=True,
+                                           context={'request': request})
+        return serializer.data
 
     def get_is_subscribed(*args):
         return True
@@ -160,7 +171,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
     """Преобразование данных класса IngredientAmount"""
-    id = serializers.IntegerField()
+    # id = serializers.IntegerField()
+    id = serializers.IntegerField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
@@ -174,7 +186,8 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Преобразование данных класса Recipe на запись"""
     ingredients = IngredientAmountSerializer(
-        many=True
+        many=True,
+        source='ingredientamount_set'
     )
     tags = serializers.SlugRelatedField(
         queryset=Tag.objects.all(),
@@ -201,37 +214,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def to_representation(self, instance):
-        self.fields.pop('ingredients')
-        self.fields.pop('tags')
-        representation = super().to_representation(instance)
-        representation['id'] = instance.id
-
-        representation['ingredients'] = IngredientAmountSerializer(
-            IngredientAmount.objects.filter(recipes=instance), many=True
-        ).data
-        representation['tags'] = TagSerializer(
-            instance.tags, many=True
-        ).data
-        representation = OrderedDict([
-            ('id', representation['id']),
-            ('tags', representation['tags']),
-            ('author', representation['author']),
-            ('ingredients', representation['ingredients']),
-            ('is_favorited', representation['is_favorited']),
-            ('is_in_shopping_cart', representation['is_in_shopping_cart']),
-            ('image', representation['image']),
-            ('name', representation['name']),
-            ('text', representation['text']),
-            ('cooking_time', representation['cooking_time']),
-        ])
-        return representation
-
     @staticmethod
     def recipes_ingredients_add(ingredients, recipe):
+
         for ingredient in ingredients:
             current_ingredient = (
-                Ingredient.objects.get(id=ingredient['id'])
+                Ingredient.objects.get(id=ingredient['ingredient']['id'])
             )
             IngredientAmount.objects.create(
                 ingredient=current_ingredient,
@@ -241,7 +229,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
+        ingredients = validated_data.pop('ingredientamount_set')
         recipes = Recipe.objects.create(**validated_data)
         recipes.tags.set(tags)
         self.recipes_ingredients_add(ingredients, recipes)
@@ -252,7 +240,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         IngredientAmount.objects.filter(recipes=instance).delete()
         tags = validated_data.pop('tags')
         instance.tags.set(tags)
-        ingredients = validated_data.pop('ingredients')
+        ingredients = validated_data.pop('ingredientamount_set')
         self.recipes_ingredients_add(ingredients, instance)
         return super().update(instance, validated_data)
 
@@ -277,7 +265,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     """Преобразование данных класса Recipe на чтение"""
     author = UserReadSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    ingredients = IngredientAmountSerializer(many=True)
+    ingredients = IngredientAmountSerializer(
+        many=True,
+        source='ingredientamount_set'
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -295,30 +286,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['id'] = instance.id
-
-        representation['ingredients'] = IngredientAmountSerializer(
-            IngredientAmount.objects.filter(recipes=instance), many=True
-        ).data
-        representation['tags'] = TagSerializer(
-            instance.tags, many=True
-        ).data
-        representation = OrderedDict([
-            ('id', representation['id']),
-            ('tags', representation['tags']),
-            ('author', representation['author']),
-            ('ingredients', representation['ingredients']),
-            ('is_favorited', representation['is_favorited']),
-            ('is_in_shopping_cart', representation['is_in_shopping_cart']),
-            ('image', representation['image']),
-            ('name', representation['name']),
-            ('text', representation['text']),
-            ('cooking_time', representation['cooking_time']),
-        ])
-        return representation
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')

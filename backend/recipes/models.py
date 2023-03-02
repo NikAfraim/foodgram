@@ -5,9 +5,9 @@ from user.models import User
 
 MIN_VALUE_FOR_AMOUNT = 1
 
-BREAKFAST = 'Завтрак'
-LUNCH = 'Обед'
-DINNER = 'Ужин'
+BREAKFAST = 'breakfast'
+LUNCH = 'lunch'
+DINNER = 'dinner'
 
 ORANGE = '#E26C2D'
 GREEN = '#49B64E'
@@ -55,12 +55,10 @@ class Tag(models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=200,
-        choices=FOOD
     )
     color = models.CharField(
         verbose_name='Цвет',
         max_length=7,
-        choices=COLOR
     )
     slug = models.SlugField(
         unique=True,
@@ -135,13 +133,13 @@ class IngredientAmount(models.Model):
     recipes = models.ForeignKey(
         Recipe,
         verbose_name='Название блюда',
-        related_name='recipes_amount',
+        # related_name='recipes_amount',
         on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(
         Ingredient,
         verbose_name='Ингридиенты',
-        related_name='ingredients_amount',
+        # related_name='ingredient_samount',
         on_delete=models.CASCADE
     )
     amount = models.IntegerField(
@@ -154,7 +152,7 @@ class IngredientAmount(models.Model):
     class Meta:
         verbose_name = 'Количество ингредиентов'
         verbose_name_plural = 'Количество ингредиентов'
-        default_related_name = 'recipes'
+        # default_related_name = 'recipes'
 
     def __str__(self):
         return f'{self.ingredient} {self.amount}'
