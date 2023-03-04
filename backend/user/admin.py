@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from recipes.models import Recipe
 from .models import Subscription, User
 
 
@@ -12,6 +13,8 @@ class UserAdmin(admin.ModelAdmin):
         'full_name',
         'username',
         'email',
+        'count_sub',
+        'count_recipe'
     )
     list_filter = ('username', 'email')
     search_fields = ('username',)
@@ -20,6 +23,14 @@ class UserAdmin(admin.ModelAdmin):
     def full_name(self, obj):
         return "%s %s" % (obj.first_name, obj.last_name)
     full_name.short_description = 'Полное имя'
+
+    def count_sub(self, obj):
+        return Subscription.objects.filter(author=obj).count()
+    count_sub.short_description = 'Количество подписчиков'
+
+    def count_recipe(self, obj):
+        return Recipe.objects.filter(author=obj).count()
+    count_recipe.short_description = 'Количество рецептов'
 
 
 @admin.register(Subscription)

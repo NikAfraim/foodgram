@@ -1,13 +1,12 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from foodgram.settings import (LIMIT_CHAR_7, LIMIT_CHAR_200,
+                               LIMIT_CHAR_150, LIMIT_CHAR_254)
 from user.models import User
 
 MIN_VALUE_FOR_AMOUNT = 1
-
-BREAKFAST = 'breakfast'
-LUNCH = 'lunch'
-DINNER = 'dinner'
+MIN_VALUE_FOR_COOKING_TIME = 1
 
 ORANGE = '#E26C2D'
 GREEN = '#49B64E'
@@ -21,17 +20,18 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=200
+        max_length=LIMIT_CHAR_200
     )
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
-        max_length=200
+        max_length=LIMIT_CHAR_200
     )
 
     class Meta:
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
         default_related_name = 'Ingredients'
+        unique_together = ('name', 'measurement_unit',)
 
     def __str__(self):
         return f'{self.name} {self.measurement_unit}'
@@ -39,32 +39,23 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     """Модель тегов"""
-
-    FOOD = (
-        (BREAKFAST, 'Завтрак'),
-        (LUNCH, 'Обед'),
-        (DINNER, 'Ужин')
-    )
     COLOR = (
         (ORANGE, 'Оранжевый'),
         (GREEN, 'Зеленый'),
-        (PURPLE, 'Фиолетовый'),
-        (BLUE, 'Синий'),
-        (YELLOW, 'Желтый')
+        (PURPLE, 'Фиолетовый')
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=200,
-        choices=FOOD
+        max_length=LIMIT_CHAR_200,
     )
     color = models.CharField(
         verbose_name='Цвет',
-        max_length=7,
+        max_length=LIMIT_CHAR_7,
         choices=COLOR
     )
     slug = models.SlugField(
         unique=True,
-        max_length=200
+        max_length=LIMIT_CHAR_200
     )
 
     class Meta:
@@ -90,7 +81,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=200,
+        max_length=LIMIT_CHAR_200,
         help_text='Напишите название блюда'
     )
     image = models.ImageField(
@@ -100,7 +91,6 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         verbose_name='Описание',
-        max_length=200,
         help_text='Описание для блюда'
     )
     ingredients = models.ManyToManyField(
@@ -113,10 +103,10 @@ class Recipe(models.Model):
         verbose_name='Теги',
         help_text='Выберите теги'
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(   # DecimalField ?
         verbose_name='Время готовки',
         validators=[
-            MinValueValidator(MIN_VALUE_FOR_AMOUNT)
+            MinValueValidator(MIN_VALUE_FOR_COOKING_TIME)
         ]
     )
 
@@ -157,30 +147,9 @@ class IngredientAmount(models.Model):
         return f'{self.ingredient} {self.amount}'
 
 
-class Favourites(models.Model):
-    """Модель избранного"""
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        verbose_name='Название рецепта'
-    )
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь'
-    )
+class AbstractModel(models.Model):
+    """Абстрактная модель для Favourite и ShopList"""
 
-    class Meta:
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'
-        default_related_name = 'favourites'
-
-    def __str__(self):
-        return f'{self.recipe}'
-
-
-class ShopList(models.Model):
-    """Модель списка покупок"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -193,9 +162,40 @@ class ShopList(models.Model):
     )
 
     class Meta:
+        abstract = True,
+
+
+class Favourites(AbstractModel):
+    """Модель избранного"""
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        default_related_name = 'favourites'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_favourite',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.recipe}'
+
+
+class ShopList(AbstractModel):
+    """Модель списка покупок"""
+
+    class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Список покупок'
         default_related_name = 'shop_list'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_shop_list',
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipe}'
