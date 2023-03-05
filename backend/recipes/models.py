@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
-
 from user.models import User
 
 MIN_VALUE_FOR_AMOUNT = 1

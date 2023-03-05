@@ -334,7 +334,6 @@ class ShopListSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         requests = self.context['request']
-        recipe = self.instance
 
         if requests.method == 'POST':
             if ShopList.objects.filter(
