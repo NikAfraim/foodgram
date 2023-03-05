@@ -1,8 +1,8 @@
 from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
 from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
                             ShopList, Tag)
+from rest_framework import serializers
 from user.models import Subscription, User
 
 MIN_VALUE_FOR_AMOUNT = 1
