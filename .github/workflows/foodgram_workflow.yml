@@ -60,7 +60,7 @@ jobs:
 #        with:
 #          push: true
 #          file: ./frontend/Dockerfile
-#          tags: ${{secrets.DOCKER_USERNAME}}/foodgram_frontend:latest
+#          tags: ${{secrets.DOCKER_USERNAME}}/foodgram_frontend:lates
 
 
   deploy:
