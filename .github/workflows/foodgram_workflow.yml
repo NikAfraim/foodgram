@@ -55,12 +55,12 @@ jobs:
           file: ./backend/Dockerfile
           tags: ${{secrets.DOCKER_USERNAME}}/foodgram_backend:latest
 
-      - name: push image to docker hub
-        uses: docker/build-push-action@v4
-        with:
-          push: true
-          file: ./frontend/Dockerfile
-          tags: ${{secrets.DOCKER_USERNAME}}/foodgram_frontend:latest
+#      - name: push image to docker hub
+#        uses: docker/build-push-action@v4
+#        with:
+#          push: true
+#          file: ./frontend/Dockerfile
+#          tags: ${{secrets.DOCKER_USERNAME}}/foodgram_frontend:latest
 
 
   deploy:

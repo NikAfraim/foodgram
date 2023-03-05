@@ -23,10 +23,10 @@ services:
       - ./.env
 
   frontend:
-#    build:
-#      context: ../frontend
-#      dockerfile: Dockerfile
-    image: nikiafree/foodgram_frontend:latest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+#    image: nikiafree/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
