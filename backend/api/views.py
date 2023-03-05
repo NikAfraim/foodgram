@@ -7,6 +7,10 @@ from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
+                            ShopList, Tag)
+from user.models import Subscription, User
+
 from .filters import IngredientFilter, RecipesFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrReadOnly
@@ -14,10 +18,6 @@ from .serializers import (FavouritesSerializer, IngredientSerializer,
                           RecipeReadSerializer, RecipeWriteSerializer,
                           ShopListSerializer, SubscriptionSerializer,
                           TagSerializer, UserReadSerializer)
-
-from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
-                            ShopList, Tag)
-from user.models import Subscription, User
 
 
 class UserViewSet(DjoserUserViewSet):
