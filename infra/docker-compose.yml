@@ -26,7 +26,7 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-#    image: nikiafree/foodgram_frontend:latest
+#    image: nikiafree/foodgram_frontend:lates
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
