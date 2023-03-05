@@ -9,6 +9,9 @@ services:
       - ./.env
 
   backend:
+#    build:
+#      context: ../backend
+#      dockerfile: Dockerfile
     image: nikiafree/foodgram_backend:latest
     restart: always
     volumes:
@@ -20,9 +23,10 @@ services:
       - ./.env
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+#    build:
+#      context: ../frontend
+#      dockerfile: Dockerfile
+    image: nikiafree/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:

@@ -310,15 +310,14 @@ class FavouritesSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-        recipe = self.instance
 
         if request.method == 'POST':
             if Favourites.objects.filter(
-                    user=request.user, recipe=recipe).exists():
+                    user=data['user'], recipe=data['recipe']).exists():
                 raise serializers.ValidationError('Рецепт уже в избранном')
         if request.method == 'DELETE':
             if not Favourites.objects.filter(
-                    user=request.user, recipe=recipe
+                    user=data['user'], recipe=data['recipe']
             ).exists():
                 raise serializers.ValidationError("Рецепт не в избранном")
         return data
@@ -340,12 +339,12 @@ class ShopListSerializer(serializers.ModelSerializer):
 
         if requests.method == 'POST':
             if ShopList.objects.filter(
-                    user=requests.user, recipe=recipe).exists():
+                    user=data['user'], recipe=data['recipe']).exists():
                 raise serializers.ValidationError(
                     'Рецепт уже в списке покупок')
         if requests.method == "DELETE":
             if not ShopList.objects.filter(
-                    user=requests.user, recipe=recipe
+                    user=data['user'], recipe=data['recipe']
             ).exists():
                 raise serializers.ValidationError(
                     'Рецепта нету в списке покупок')

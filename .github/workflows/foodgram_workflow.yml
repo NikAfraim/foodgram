@@ -55,12 +55,12 @@ jobs:
           file: ./backend/Dockerfile
           tags: ${{secrets.DOCKER_USERNAME}}/foodgram_backend:latest
 
-#      - name: push image to docker hub
-#        uses: docker/build-push-action@v4
-#        with:
-#          push: true
-#          file: ./frontend/Dockerfile
-#          tags: ${{secrets.DOCKER_USERNAME}}/foodgram_frontend:latest
+      - name: push image to docker hub
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          file: ./frontend/Dockerfile
+          tags: ${{secrets.DOCKER_USERNAME}}/foodgram_frontend:latest
 
 
   deploy:
@@ -89,7 +89,6 @@ jobs:
             echo DB_HOST=${{ secrets.DB_HOST }} >> .env
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             echo DEBUG=${{ secrets.DEBUG }} >> .env
-            echo ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} >> .env
             echo DATABASE=${{ secrets.DATABASE }} >> .env
             sudo docker pull ${{secrets.DOCKER_USERNAME}}/foodgram_backend:latest
             sudo docker-compose up -d --build
