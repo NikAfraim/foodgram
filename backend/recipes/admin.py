@@ -18,10 +18,12 @@ class IngredientInline(admin.TabularInline):
     extra = 1
     min_num = 1
 
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     """Настройка Recipe для панели Admin"""
-    list_display = ('pk', 'author', 'name', 'recipe_ingredients', 'cooking_time', 'count')
+    list_display = ('pk', 'author', 'name',
+                    'recipe_ingredients', 'cooking_time', 'count')
     filter_horizontal = ('tags',)
     search_fields = ('text',)
     list_filter = ('pub_date', 'author', 'name', 'tags')
@@ -34,20 +36,21 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def recipe_ingredients(self, obj):
         ingredients = (
-                IngredientAmount.objects
-                .filter(recipes=obj)
-                .order_by('ingredient__name').values('ingredient')
-                .annotate(total_amount=Sum('amount'))
-                .values_list(
-                    'ingredient__name', 'total_amount',
-                    'ingredient__measurement_unit'
-                )
+            IngredientAmount.objects
+            .filter(recipes=obj)
+            .order_by('ingredient__name').values('ingredient')
+            .annotate(total_amount=Sum('amount'))
+            .values_list(
+                'ingredient__name', 'total_amount',
+                'ingredient__measurement_unit'
+            )
         )
         ingredient_list = []
         [ingredient_list.append('{} - {} {}.'.format(*ingredient))
          for ingredient in ingredients]
         return ingredient_list
     recipe_ingredients.short_description = 'Ингредиенты'
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
