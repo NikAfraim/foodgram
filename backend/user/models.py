@@ -1,8 +1,6 @@
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
-
-from foodgram.settings import (LIMIT_CHAR_7, LIMIT_CHAR_200,
-                               LIMIT_CHAR_150, LIMIT_CHAR_254)
 
 
 class User(AbstractUser):
@@ -10,26 +8,26 @@ class User(AbstractUser):
 
     username = models.CharField(
         verbose_name='Логин',
-        max_length=LIMIT_CHAR_150,
+        max_length=settings.LIMIT_CHAR_150,
         unique=True
     )
     password = models.CharField(
         verbose_name='Пароль',
-        max_length=LIMIT_CHAR_150
+        max_length=settings.LIMIT_CHAR_150
     )
     email = models.EmailField(
         verbose_name='E-mail',
-        max_length=LIMIT_CHAR_254,
+        max_length=settings.LIMIT_CHAR_254,
         unique=True
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=LIMIT_CHAR_150,
+        max_length=settings.LIMIT_CHAR_150,
         blank=True
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=LIMIT_CHAR_150,
+        max_length=settings.LIMIT_CHAR_150,
         blank=True
     )
     USERNAME_FIELD = 'email'

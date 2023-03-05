@@ -225,16 +225,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def recipes_ingredients_add(ingredients, recipe):
-        ingredients_amount = []
-        for ingredient in ingredients:
-            current_ingredient = (
-                Ingredient.objects.get(id=ingredient['ingredient']['id'])
-            )
-            ingredients_amount.append(IngredientAmount(
-                ingredient=current_ingredient,
+        ingredients_amount = [
+            IngredientAmount(
+                ingredient=Ingredient.objects.get(
+                    id=ingredient['ingredient']['id']
+                ),
                 recipes=recipe,
                 amount=ingredient['amount']
-            ))
+            ) for ingredient in ingredients
+        ]
         IngredientAmount.objects.bulk_create(ingredients_amount)
 
     def create(self, validated_data):
@@ -304,10 +303,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             and ShopList.objects.filter(
                 recipe=obj, user=request.user
             ).exists()
-    )
+        )
 
 
-class FavouritesSerializer(ShortRecipeSerializer):
+class FavouritesSerializer(serializers.ModelSerializer):
     """Преобразование данных класса Favourite"""
 
     def validate(self, data):
@@ -325,8 +324,15 @@ class FavouritesSerializer(ShortRecipeSerializer):
                 raise serializers.ValidationError("Рецепт не в избранном")
         return data
 
+    class Meta:
+        model = Favourites
+        fields = (
+            'user',
+            'recipe'
+        )
 
-class ShopListSerializer(ShortRecipeSerializer):
+
+class ShopListSerializer(serializers.ModelSerializer):
     """Преобразование данных класса ShopList"""
 
     def validate(self, data):
@@ -345,3 +351,10 @@ class ShopListSerializer(ShortRecipeSerializer):
                 raise serializers.ValidationError(
                     'Рецепта нету в списке покупок')
         return data
+
+    class Meta:
+        model = ShopList
+        fields = (
+            'user',
+            'recipe'
+        )

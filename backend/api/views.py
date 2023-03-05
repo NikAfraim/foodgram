@@ -95,61 +95,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    # @action(detail=True,
-    #         methods=['post'],
-    #         permission_classes=(IsAuthorOrReadOnly,))
-    # def favorite(self, request, **kwargs):
-    #     recipe = get_object_or_404(self.queryset, id=kwargs['pk'])
-    #     serializer = FavouritesSerializer(recipe, data=request.data,
-    #                                       context={'request': request})
-    #     serializer.is_valid(raise_exception=True)
-    #     if request.method == 'POST':
-    #         Favourites.objects.create(user=request.user, recipe=recipe)
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     if request.method == 'DELETE':
-    #         Favourites.objects.filter(user=request.user,
-    #                                   recipe=recipe).delete()
-    #         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    # @action(detail=True,
-    #         methods=['post', 'delete'],
-    #         permission_classes=(IsAuthorOrReadOnly,))
-    # def shopping_cart(self, request, **kwargs):
-    #     recipe = get_object_or_404(self.queryset, id=kwargs['pk'])
-    #     serializer = ShopListSerializer(recipe, data=request.data,
-    #                                     context={'request': request})
-    #     serializer.is_valid(raise_exception=True)
-    #     if request.method == 'POST':
-    #         ShopList.objects.create(user=request.user, recipe=recipe)
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     if request.method == 'DELETE':
-    #         get_object_or_404(ShopList, user=request.user,
-    #                           recipe=recipe).delete()
-    #         return Response(status=status.HTTP_204_NO_CONTENT)
-
     @action(detail=True,
             methods=['post'],
             permission_classes=(IsAuthorOrReadOnly,))
     def favorite(self, request, **kwargs):
         return self.create_obj(kwargs['pk'], request,
-                               FavouritesSerializer, Favourites)
+                               FavouritesSerializer)
 
     @favorite.mapping.delete
     def delete_favourite(self, request, **kwargs):
         return self.delete_obj(kwargs['pk'], request,
-                               Favourites, FavouritesSerializer)
+                               Favourites)
 
     @action(detail=True,
             methods=['post'],
             permission_classes=(IsAuthorOrReadOnly,))
     def shopping_cart(self, request, **kwargs):
         return self.create_obj(kwargs['pk'], request,
-                               ShopListSerializer, ShopList)
+                               ShopListSerializer)
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, **kwargs):
         return self.delete_obj(kwargs['pk'], request,
-                               ShopList, ShopListSerializer)
+                               ShopList)
 
     @action(detail=False,
             methods=['get'],
@@ -168,23 +136,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.download(ingredients)
 
     @staticmethod
-    def create_obj(recipe_id, request, serializer, model):
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-        serializer = serializer(recipe, data=request.data,
-                                context={'request': request})
+    def create_obj(recipe_id, request, serializer):
+        data = {'user': request.user.id, 'recipe': recipe_id}
+        serializer = serializer(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        # serializer.save(recipe=recipe, user=request.user)
-        model.objects.create(user=request.user, recipe=recipe)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def delete_obj(recipe_id, request, model, serializer):
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-        serializer = serializer(recipe, data=request.data,
-                                context={'request': request})
-        serializer.is_valid(raise_exception=True)
+    def delete_obj(recipe_id, request, model):
         get_object_or_404(model, user=request.user,
-                          recipe=recipe).delete()
+                          recipe=recipe_id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @staticmethod

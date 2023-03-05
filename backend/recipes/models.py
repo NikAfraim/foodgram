@@ -1,8 +1,7 @@
 from django.core.validators import MinValueValidator
+from django.conf import settings
 from django.db import models
 
-from foodgram.settings import (LIMIT_CHAR_7, LIMIT_CHAR_200,
-                               LIMIT_CHAR_150, LIMIT_CHAR_254)
 from user.models import User
 
 MIN_VALUE_FOR_AMOUNT = 1
@@ -20,18 +19,23 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=LIMIT_CHAR_200
+        max_length=settings.LIMIT_CHAR_200
     )
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
-        max_length=LIMIT_CHAR_200
+        max_length=settings.LIMIT_CHAR_200
     )
 
     class Meta:
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
         default_related_name = 'Ingredients'
-        unique_together = ('name', 'measurement_unit',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient',
+            )
+        ]
 
     def __str__(self):
         return f'{self.name} {self.measurement_unit}'
@@ -46,16 +50,16 @@ class Tag(models.Model):
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=LIMIT_CHAR_200,
+        max_length=settings.LIMIT_CHAR_200,
     )
     color = models.CharField(
         verbose_name='Цвет',
-        max_length=LIMIT_CHAR_7,
+        max_length=settings.LIMIT_CHAR_7,
         choices=COLOR
     )
     slug = models.SlugField(
         unique=True,
-        max_length=LIMIT_CHAR_200
+        max_length=settings.LIMIT_CHAR_200
     )
 
     class Meta:
@@ -81,7 +85,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=LIMIT_CHAR_200,
+        max_length=settings.LIMIT_CHAR_200,
         help_text='Напишите название блюда'
     )
     image = models.ImageField(
@@ -103,7 +107,7 @@ class Recipe(models.Model):
         verbose_name='Теги',
         help_text='Выберите теги'
     )
-    cooking_time = models.PositiveSmallIntegerField(   # DecimalField ?
+    cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время готовки',
         validators=[
             MinValueValidator(MIN_VALUE_FOR_COOKING_TIME)
@@ -132,7 +136,7 @@ class IngredientAmount(models.Model):
         verbose_name='Ингридиенты',
         on_delete=models.CASCADE
     )
-    amount = models.IntegerField(
+    amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
         validators=[
             MinValueValidator(MIN_VALUE_FOR_AMOUNT)
@@ -164,6 +168,9 @@ class AbstractModel(models.Model):
     class Meta:
         abstract = True,
 
+    def __str__(self):
+        return f'{self.recipe}'
+
 
 class Favourites(AbstractModel):
     """Модель избранного"""
@@ -179,9 +186,6 @@ class Favourites(AbstractModel):
             )
         ]
 
-    def __str__(self):
-        return f'{self.recipe}'
-
 
 class ShopList(AbstractModel):
     """Модель списка покупок"""
@@ -196,6 +200,3 @@ class ShopList(AbstractModel):
                 name='unique_shop_list',
             )
         ]
-
-    def __str__(self):
-        return f'{self.recipe}'

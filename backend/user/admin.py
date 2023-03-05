@@ -25,11 +25,11 @@ class UserAdmin(admin.ModelAdmin):
     full_name.short_description = 'Полное имя'
 
     def count_sub(self, obj):
-        return Subscription.objects.filter(author=obj).count()
+        return obj.author.count()
     count_sub.short_description = 'Количество подписчиков'
 
     def count_recipe(self, obj):
-        return Recipe.objects.filter(author=obj).count()
+        return obj.recipes.count()
     count_recipe.short_description = 'Количество рецептов'
 
 
