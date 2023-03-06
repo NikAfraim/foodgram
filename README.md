@@ -3,6 +3,7 @@ Foodgram
 
 
 ### Статус workflow
+[![foodgram_workflow](https://github.com/NikAfraim/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg?branch=master)](https://github.com/NikAfraim/foodgram-project-react/actions/workflows/foodgram_workflow.yml)
 ---
 
 ### Описание
