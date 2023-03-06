@@ -79,7 +79,7 @@ jobs:
           script: |
             sudo systemctl stop nginx
             sudo docker-compose stop
-            sudo docker-compose rm web
+            sudo docker-compose rm backend
             touch .env
             echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
@@ -92,8 +92,8 @@ jobs:
             echo DATABASE=${{ secrets.DATABASE }} >> .env
             sudo docker pull ${{secrets.DOCKER_USERNAME}}/foodgram_backend:latest
             sudo docker-compose up -d --build
-            sudo docker-compose exec -T web python manage.py migrate
-            sudo docker-compose exec -T web python manage.py collectstatic --no-input
+            sudo docker-compose exec -T backend python manage.py migrate
+            sudo docker-compose exec -T backend python manage.py collectstatic --no-input
 
   send_message:
     name: send message
