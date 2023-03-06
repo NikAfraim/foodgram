@@ -59,38 +59,3 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'color', 'slug')
     search_fields = ('name',)
     list_editable = ('name', 'color', 'slug')
-
-
-@admin.register(IngredientAmount)
-class IngredientAmountAdmin(admin.ModelAdmin):
-    """Настройка IngredientAmount для панели Admin"""
-
-    list_display = ('pk', 'ingredient', 'recipes', 'amount')
-
-
-@admin.register(Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
-    """Настройка Ingredient для панели Admin"""
-
-    list_display = ('pk', 'name', 'measurement_unit')
-    list_filter = ('name',)
-    search_fields = ('name',)
-    list_editable = ('name', 'measurement_unit',)
-
-
-@admin.register(Favourites)
-class FavouritesAdmin(admin.ModelAdmin):
-    """Настройка Favourites для панели Admin"""
-
-    list_display = ('pk', 'user', 'recipe')
-    search_fields = ('user',)
-    list_editable = ('recipe',)
-
-
-@admin.register(ShopList)
-class ShopListAdmin(admin.ModelAdmin):
-    """Настройка ShopList для панели Admin"""
-
-    list_display = ('pk', 'user', 'recipe')
-    search_fields = ('user',)
-    list_editable = ('recipe',)
