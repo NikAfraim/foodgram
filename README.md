@@ -72,7 +72,7 @@ docker-compose exec web python manage.py collectstatic --no-input
 ```
 ---
 
-### Когда вы запустите проект, по адресу http://localhost/api/docs/ будет доступна документация проекта YaMDb.
+### Когда вы запустите проект, по адресу http://localhost/api/docs/ будет доступна документация проекта Foodgram.
 ---
 Разработчик foodgram-project:
 - Сенгилейцев Никита
