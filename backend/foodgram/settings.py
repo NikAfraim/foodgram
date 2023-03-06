@@ -142,7 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DRF_API_LOGGER_DATABASE = True
 
-# CSRF_TRUSTED_ORIGINS = ['http://тут ваш порт:тут что слушает nginx']!
+# CSRF_TRUSTED_ORIGINS = ['http://тут ваш порт:тут что слушает nginx']
 
 LIMIT_CHAR_254 = 254
 LIMIT_CHAR_150 = 150
