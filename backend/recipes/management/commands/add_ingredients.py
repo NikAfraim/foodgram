@@ -3,8 +3,8 @@ import csv
 from django.core.management.base import BaseCommand
 from recipes.models import Ingredient, Tag
 
-PATH_CSV_INGREDIENTS = '../data/ingredients.csv'
-PATH_CSV_TAGS = '../data/tags.csv'
+PATH_CSV_INGREDIENTS = './data/ingredients.csv'
+PATH_CSV_TAGS = './data/tags.csv'
 
 
 class Command(BaseCommand):
