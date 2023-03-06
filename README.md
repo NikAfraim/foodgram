@@ -1,7 +1,5 @@
-# Дипломный проект сайт Foodgram
+Foodgram
 ---
-
-*foodgram-project-react*
 
 
 ### Статус workflow
