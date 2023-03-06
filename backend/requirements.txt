@@ -1,4 +1,4 @@
-Django==4.1.7
+Django
 django-filter==2.4.0
 djangorestframework==3.12.4
 djangorestframework-simplejwt==4.8.0
